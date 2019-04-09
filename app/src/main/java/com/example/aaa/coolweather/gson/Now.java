@@ -12,6 +12,7 @@ import com.google.gson.annotations.SerializedName;
  *      "cond":{
  *          "txt":"阵雨"
  *      }
+ *
  *  }
  */
 public class Now {

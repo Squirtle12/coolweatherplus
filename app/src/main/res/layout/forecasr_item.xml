@@ -14,14 +14,13 @@
     android:layout_weight="2"
     android:textColor="#fff"
     />
-    <TextView
-        android:id="@+id/info_text"
+    <ImageView
+        android:id="@+id/weather_icon"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:layout_weight="1"
         android:gravity="center"
-        android:textColor="#fff"
         />
     <TextView
         android:id="@+id/max_text"

@@ -31,6 +31,8 @@ import com.example.aaa.coolweather.util.HttpUtil;
 import com.example.aaa.coolweather.util.Utility;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -55,6 +57,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     private Button navButton;
     private  String weatherId;
     private SharedPreferences prefs;
+    private Map<String,Integer> map;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,6 +88,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         navButton=(Button)findViewById(R.id.nav_button);
         setting=(Button)findViewById(R.id.setting);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        init();
         //prefs=getSharedPreferences("Weather", Context.MODE_PRIVATE);
         String weatherString = prefs.getString("weather", null);
 
@@ -129,7 +133,155 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         navButton.setOnClickListener(this);
         setting.setOnClickListener(this);
     }
+    /**
+     * 初始化数据
+     */
+    public void init(){
+        map=new HashMap<>();
+        String[]strings=new String[]{"晴","多云", "少云",
+                "晴间多云",
+                "阴",
+                "有风",
+                "平静",
+                "微风",
+                "和风",
+                "清风",
+                "强风/劲风",
+                "疾风",
+                "大风",
+                "烈风",
+                "风暴",
+                "狂爆风",
+                "飓风",
+                "龙卷风",
+                "热带风暴",
+                "阵雨",
+                "强阵雨",
+                "雷阵雨",
+                "强雷阵雨",
+                "雷阵雨伴有冰雹",
+                "小雨",
+                "中雨",
+                "大雨",
+                "极端降雨",
+                "毛毛雨/细雨",
+                "暴雨",
+                "大暴雨",
+                "特大暴雨",
+                "冻雨",
+                "小到中雨",
+                "中到大雨",
+                "大到暴雨",
+                "暴雨到大暴雨",
+                "大暴雨到特大暴雨",
+                "雨",
+                "小雪",
+                "中雪",
+                "大雪",
+                "暴雪",
+                "雨夹雪",
+                "雨雪天气",
+                "阵雨夹雪",
+                "阵雪",
+                "小到中雪",
+                "中到大雪",
+                "大到暴雪",
+                "雪",
+                "薄雾",
+                "雾",
+                "霾",
+                "扬沙",
+                "浮尘",
+                "沙尘暴",
+                "强沙尘暴",
+                "浓雾",
+                "强浓雾",
+                "中度霾",
+                "重度霾",
+                "严重霾",
+                "大雾",
+                "特强浓雾",
+                "热",
+                "冷",
+                "未知"
+        };
+        int []ints=new int[]{
+                R.mipmap.w100,
+                R.mipmap.w101,
+                R.mipmap.w102,
+                R.mipmap.w103,
+                R.mipmap.w104,
+                R.mipmap.w200,
+                R.mipmap.w201,
+                R.mipmap.w202,
+                R.mipmap.w203,
+                R.mipmap.w204,
+                R.mipmap.w205,
+                R.mipmap.w206,
+                R.mipmap.w207,
+                R.mipmap.w208,
+                R.mipmap.w209,
+                R.mipmap.w210,
+                R.mipmap.w211,
+                R.mipmap.w212,
+                R.mipmap.w213,
+                R.mipmap.w300,
+                R.mipmap.w301,
+                R.mipmap.w302,
+                R.mipmap.w303,
+                R.mipmap.w304,
+                R.mipmap.w305,
+                R.mipmap.w306,
+                R.mipmap.w307,
+                R.mipmap.w308,
+                R.mipmap.w309,
+                R.mipmap.w310,
+                R.mipmap.w311,
+                R.mipmap.w312,
+                R.mipmap.w313,
+                R.mipmap.w314,
+                R.mipmap.w315,
+                R.mipmap.w316,
+                R.mipmap.w317,
+                R.mipmap.w318,
+                R.mipmap.w399,
+                R.mipmap.w400,
+                R.mipmap.w401,
+                R.mipmap.w402,
+                R.mipmap.w403,
+                R.mipmap.w404,
+                R.mipmap.w405,
+                R.mipmap.w406,
+                R.mipmap.w407,
+                R.mipmap.w408,
+                R.mipmap.w409,
+                R.mipmap.w410,
+                R.mipmap.w499,
+                R.mipmap.w500,
+                R.mipmap.w501,
+                R.mipmap.w502,
+                R.mipmap.w503,
+                R.mipmap.w504,
+                R.mipmap.w507,
+                R.mipmap.w508,
+                R.mipmap.w509,
+                R.mipmap.w510,
+                R.mipmap.w511,
+                R.mipmap.w512,
+                R.mipmap.w513,
+                R.mipmap.w514,
+                R.mipmap.w515,
+                R.mipmap.w900,
+                R.mipmap.w901,
+                R.mipmap.w999
 
+        };
+        for (int i=0;i<strings.length;i++)
+        {
+            map.put(strings[i],ints[i]);
+        }
+
+    }
     /**
      * button的相应事件
      */
@@ -222,11 +374,14 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
             View view = LayoutInflater.from(this).inflate(R.layout.forecasr_item,
                     forecastLayout, false);
             TextView date_text = (TextView) view.findViewById(R.id.date_text);
-            TextView info_text = (TextView) view.findViewById(R.id.info_text);
+            ImageView weather_icon=(ImageView)view.findViewById(R.id.weather_icon);
+            //TextView info_text = (TextView) view.findViewById(R.id.info_text);
             TextView max_text = (TextView) view.findViewById(R.id.max_text);
             TextView min_text = (TextView) view.findViewById(R.id.min_text);
             date_text.setText(forecast.date);
-            info_text.setText(forecast.more.info);
+            String weather_name=forecast.more.info;
+
+            weather_icon.setImageResource(map.get(weather_name));
             max_text.setText(forecast.temperature.max);
             min_text.setText(forecast.temperature.min);
             forecastLayout.addView(view);
