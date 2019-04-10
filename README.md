@@ -1,5 +1,6 @@
 # coolweatherplus
-将《第一行代码》中的coolweather进行扩展。  
+数据来源：和风天气。
+将《第一行代码》中的coolweather进行扩展开发。  
 博客地址：https://blog.csdn.net/weixin_41796401/article/details/89006956  
 扩展如下三个功能：  
 1.用户自定义是否更新数据和后台更新数据时间。  
