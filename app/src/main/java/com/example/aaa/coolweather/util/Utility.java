@@ -5,8 +5,10 @@ import android.text.TextUtils;
 import com.example.aaa.coolweather.db.City;
 import com.example.aaa.coolweather.db.County;
 import com.example.aaa.coolweather.db.Province;
-import com.example.aaa.coolweather.gson.Weather;
+import com.example.aaa.coolweather.gson.CommonWeather;
+import com.example.aaa.coolweather.gson.CommonWeatherDeserializer;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -100,36 +102,25 @@ public class Utility {
         return false;
     }
     /**
-     * 将返回的JSON数据解析成Weather实体类
-     * 数据类型
-     * {
-     *     "HeWeather":[
-     *     {
-     *         "status":"ok",
-     *         "basic":{},
-     *         "aqi":{},
-     *         "now":{},
-     *         "suggestion":{},
-     *         "daily_forecast":{}
-     *     }
-     *     ]
-     * }
+     * 将返回的JSON数据解析成CommonWeather实体类
+     *数据类型：{
+     HeWeather6: [
+     {
+     basic: {},
+     update: {},
+     status: "ok",
+     now: {},
+     daily_forecast:[{},{},{}],
+     lifestyleL:[{},{},{}],
+     }
+     ]
+     }
      */
-    public static Weather handleWeatherResponse(String response) {
-        try {
-            JSONObject jsonObject=new JSONObject(response);
-            JSONArray jsonArray=jsonObject.getJSONArray("HeWeather");
-            String weatherContent=jsonArray.getJSONObject(0).toString();
-            //之间返回Weather类型的变量
-            //之前是使用TypeToken将期望解析成的数据类型传入到fromJson()方法
-            //Gson gson=new Gson();
-            //LIst<Person>people=gson.fromJson(jsonData,new TypeToken<LIst<Person>>(){}.getType());
-            return new Gson().fromJson(weatherContent,Weather.class);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        return null;
+    public static CommonWeather handleCommonWeatherResponse(String response){
+        GsonBuilder gsonBuilder=new GsonBuilder();
+        gsonBuilder.registerTypeAdapter(CommonWeather.class,new CommonWeatherDeserializer());
+        Gson gson=gsonBuilder.create();
+        CommonWeather commonWeather=gson.fromJson(response,CommonWeather.class);
+        return commonWeather;
     }
 }

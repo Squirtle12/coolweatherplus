@@ -10,7 +10,8 @@ import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.example.aaa.coolweather.gson.Weather;
+import com.example.aaa.coolweather.gson.CommonWeather;
+
 import com.example.aaa.coolweather.util.HttpUtil;
 import com.example.aaa.coolweather.util.Utility;
 
@@ -60,19 +61,20 @@ public class AutoUpdateService extends Service {
         return null;
     }
     /**
-     * 更新天气信息
+     * 更新天气信息,其实是更新缓存中的weather数据，这样再一次打开app（WeatherAcitivity时）
+     * 就可以直接解析这个String（json），并显示了。
      */
     private void updateWeather(){
 
         SharedPreferences prefs= PreferenceManager.getDefaultSharedPreferences(this);
-        //这个就是解析下来的json数据。
+        //其实只是想要它的id，来去获取服务器中的数据
         String weatherString=prefs.getString("weather",null);
         if (weatherString!=null)
         {
             //有缓存直接解析
-            Weather weather= Utility.handleWeatherResponse(weatherString);
-            final String weatherId=weather.basic.weatherid;
-            String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId +
+            CommonWeather commonweather= Utility.handleCommonWeatherResponse(weatherString);
+            final String weatherId=commonweather.getBasic().getCid();
+            String weatherUrl = "https://free-api.heweather.net/s6/weather?location=" + weatherId +
                     "&key=a15bff1949104f8ba6d4553c611ac2f7";
             HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
                 @Override
@@ -83,8 +85,8 @@ public class AutoUpdateService extends Service {
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
                         String responseText=response.body().string();
-                        Weather weather=Utility.handleWeatherResponse(responseText);
-                        if (weather!=null&&"ok".equals(weather.status)){
+                        CommonWeather commonweather=Utility.handleCommonWeatherResponse(responseText);
+                        if (commonweather!=null&&"ok".equals(commonweather.getStatus())){
                             //更新SharedPrefrences即可，不需要取更改，
                             // 因为在打开WeatherActivty中每次都会先调用缓存
                             SharedPreferences.Editor editor=PreferenceManager.

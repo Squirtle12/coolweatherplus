@@ -24,8 +24,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.aaa.coolweather.db.Province;
-import com.example.aaa.coolweather.gson.Forecast;
-import com.example.aaa.coolweather.gson.Weather;
+import com.example.aaa.coolweather.gson.CommonWeather;
 import com.example.aaa.coolweather.service.AutoUpdateService;
 import com.example.aaa.coolweather.util.HttpUtil;
 import com.example.aaa.coolweather.util.Utility;
@@ -44,12 +43,13 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     private TextView titleUpdateTime;
     private TextView degreeText;
     private TextView weatherInfoText;
+    private LinearLayout suggestionLayout;
     private LinearLayout forecastLayout;
     private TextView aqiText;
     private TextView pm25Text;
-    private TextView comfortText;
-    private TextView carWashText;
-    private TextView sportText;
+    private TextView windDirText;
+    private TextView windScText;
+
     private ImageView bingPicImg;
     private Button setting;
     public SwipeRefreshLayout swipeRefresh;
@@ -75,31 +75,32 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         titleUpdateTime = (TextView) findViewById(R.id.title_update_time);
         degreeText = (TextView) findViewById(R.id.degree_text);
         weatherInfoText = (TextView) findViewById(R.id.weather_info_text);
+        suggestionLayout=(LinearLayout)findViewById(R.id.suggestion_layout);
         forecastLayout = (LinearLayout) findViewById(R.id.forecast_layout);
         aqiText = (TextView) findViewById(R.id.aqi_text);
         pm25Text = (TextView) findViewById(R.id.pm25_text);
-        comfortText = (TextView) findViewById(R.id.comfort_text);
-        carWashText = (TextView) findViewById(R.id.car_wash_text);
-        sportText = (TextView) findViewById(R.id.sport_text);
+
         bingPicImg=(ImageView)findViewById(R.id.bing_pic_img);
         swipeRefresh=(SwipeRefreshLayout)findViewById(R.id.swipe_refresh);
         swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
         drawerLayout=(DrawerLayout)findViewById(R.id.drawer_layout);
         navButton=(Button)findViewById(R.id.nav_button);
         setting=(Button)findViewById(R.id.setting);
+        windDirText=(TextView)findViewById(R.id.wind_dir_text);
+        windScText=(TextView)findViewById(R.id.wind_sc_text);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         init();
-        //prefs=getSharedPreferences("Weather", Context.MODE_PRIVATE);
+
         String weatherString = prefs.getString("weather", null);
 
         //判断缓存中是否右
         if (weatherString != null) {
             //有缓存时直接解析天气数据
             //不需要再去上网获取了json形式数据。
-            Weather weather = Utility.handleWeatherResponse(weatherString);
+            CommonWeather commonweather = Utility.handleCommonWeatherResponse(weatherString);
             //这里也需要赋值，因为是要给下拉刷新用的
-            weatherId=weather.basic.weatherid;
-            showWeahterInfo(weather);
+            weatherId=commonweather.getBasic().getCid();
+            showWeahterInfo(commonweather);
 
         } else {
             //无缓存时去服务器查询天气
@@ -116,7 +117,6 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
                 OnRefreshListener() {
             @Override
             public void onRefresh() {
-
                 weatherId=prefs.getString("weather_id",null);
                 requestWeather(weatherId);
             }
@@ -280,7 +280,14 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         {
             map.put(strings[i],ints[i]);
         }
-
+        map.put("comf",R.drawable.icon_comf);
+        map.put("drsg",R.drawable.icon_cloth);
+        map.put("flu",R.drawable.icon_flu);
+        map.put("sport",R.drawable.icon_sport);
+        map.put("trav",R.drawable.icon_travel);
+        map.put("cw",R.drawable.icon_carwash);
+        map.put("air",R.drawable.icon_air);
+        map.put("uv",R.drawable.icon_uv);
     }
     /**
      * button的相应事件
@@ -302,7 +309,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
      */
     public void requestWeather(final String weatherId) {
 
-        String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId +
+        String weatherUrl = "https://free-api.heweather.net/s6/weather?location=" + weatherId +
                 "&key=a15bff1949104f8ba6d4553c611ac2f7";
         //请求一次更改一次（应对换城市后，在刷新就会刷新到上一个城市的bug）
         //this.weatherId=weatherId;
@@ -325,20 +332,20 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
             public void onResponse(Call call, Response response) throws IOException {
                 final String responseText = response.body().string();
                 //获取weather类
-                final Weather weather = Utility.handleWeatherResponse(responseText);
+                final CommonWeather commonweather = Utility.handleCommonWeatherResponse(responseText);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         //状态码
-                        if (weather != null && "ok".equals(weather.status)) {
+                        if (commonweather != null && "ok".equals(commonweather.getStatus())) {
                             //回去看一下SharedPrefernces
                             SharedPreferences.Editor editor = PreferenceManager.
                                     getDefaultSharedPreferences(WeatherActivity.this).edit();
-                            //必须传这个。
+                            //必须传这个,存储至sp
                             editor.putString("weather", responseText);
                             editor.apply();
                             //展示天气
-                            showWeahterInfo(weather);
+                            showWeahterInfo(commonweather);
                         } else {
                             Toast.makeText(WeatherActivity.this, "获取天气信息失败",
                                     Toast.LENGTH_SHORT).show();
@@ -356,41 +363,72 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     /**
      * 处理并展示Weather实体类中的数据(顺序为titile，now,forecast,aqi,suggestion)
      */
-    private void showWeahterInfo(Weather weather) {
-        String cityName = weather.basic.cityName;
+    private void showWeahterInfo(CommonWeather commonweather) {
+        String cityName = commonweather.getBasic().getCity();
         //不要年份了，原始是2016-08-08 21:58
-        String updateTime = weather.basic.update.updateTime.split(" ")[1];
+        String updateTime = commonweather.getUpdate().getUpdate_time().split(" ")[1];
         titleCity.setText(cityName);
         titleUpdateTime.setText(updateTime);
-        String temperature = weather.now.temperature + "°C";
-        String info = weather.now.more.info;
+        String temperature = commonweather.getNow().getTmp() + "°C";
+        String info = commonweather.getNow().getCond_txt();
         degreeText.setText(temperature);
         weatherInfoText.setText(info);
+        //每一次都要删除之前的
         forecastLayout.removeAllViews();
+        suggestionLayout.removeAllViews();
         //看有几个新的天气预报
         //动态加载布局，并设置相应的数据
-        for (Forecast forecast : weather.forecastList) {
+        boolean todayflag=true;
+
+        for (CommonWeather.DailyForecastBean dailyForecastBean : commonweather.getDaily_forecast()) {
             //类似于ListView,一会尝试下ListView的getView()
+            String date="";
             View view = LayoutInflater.from(this).inflate(R.layout.forecasr_item,
                     forecastLayout, false);
+
             TextView date_text = (TextView) view.findViewById(R.id.date_text);
             ImageView weather_icon=(ImageView)view.findViewById(R.id.weather_icon);
             //TextView info_text = (TextView) view.findViewById(R.id.info_text);
             TextView max_text = (TextView) view.findViewById(R.id.max_text);
             TextView min_text = (TextView) view.findViewById(R.id.min_text);
-            date_text.setText(forecast.date);
-            String weather_name=forecast.more.info;
+            if(todayflag==true) {
+                date="今天";
+                todayflag=false;
+            }
+            else
+                date=dailyForecastBean.getDate();
+            date_text.setText(date);
+            String weather_name=dailyForecastBean.getCond_txt_d();
 
             weather_icon.setImageResource(map.get(weather_name));
-            max_text.setText(forecast.temperature.max);
-            min_text.setText(forecast.temperature.min);
+            max_text.setText(dailyForecastBean.getTmp_max());
+            min_text.setText(dailyForecastBean.getTmp_min());
             forecastLayout.addView(view);
         }
-        aqiText.setText(weather.aqi.city.aqi);
-        pm25Text.setText(weather.aqi.city.pm25);
-        comfortText.setText(weather.suggestion.comfort.info);
-        carWashText.setText(weather.suggestion.carWash.info);
-        sportText.setText(weather.suggestion.sport.info);
+
+        //aqiText.setText(commonweather.aqi.city.aqi);
+        //pm25Text.setText(weather.aqi.city.pm25);
+
+        windDirText.setText(commonweather.getNow().getWind_dir());
+        windScText.setText(commonweather.getNow().getWind_sc());
+        //建议
+        for (CommonWeather.LifestyleBean lifestyleBean:commonweather.getLifestyle())
+        {
+            View view = LayoutInflater.from(this).inflate(R.layout.suggestion_item,suggestionLayout,false);
+            ImageView suggestion_icon=(ImageView) view.findViewById(R.id.suggestion_icon);
+            TextView suggestion_main_idea=(TextView)view.findViewById(R.id.suggestion_main_idea);
+            TextView suggestion_txt=(TextView)view.findViewById(R.id.suggestion_txt);
+            suggestion_main_idea.setText(lifestyleBean.getMain_idea());
+            suggestion_txt.setText(lifestyleBean.getTxt());
+            suggestion_icon.setImageResource(map.get(lifestyleBean.getType()));
+
+            //这点很重要，别忘了
+            suggestionLayout.addView(view);
+        }
+        /*comfortText.setText(commonweather.getLifestyle().get(0).getTxt());
+        carWashText.setText(commonweather.getLifestyle().get(4).getTxt());
+        sportText.setText(commonweather.getLifestyle().get(3).getTxt());
+        */
         //设置可见
         weatherLayout.setVisibility(View.VISIBLE);
 
