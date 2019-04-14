@@ -44,7 +44,7 @@
             </include>
             <include layout="@layout/forecast">
             </include>
-            <include layout="@layout/wind">
+            <include layout="@layout/weather_set">
             </include>
             <include layout="@layout/suggestion">
             </include>

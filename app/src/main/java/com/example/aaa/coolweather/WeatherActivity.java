@@ -31,6 +31,7 @@ import com.example.aaa.coolweather.util.Utility;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import okhttp3.Call;
@@ -47,8 +48,16 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     private LinearLayout forecastLayout;
     private TextView aqiText;
     private TextView pm25Text;
-    private TextView windDirText;
-    private TextView windScText;
+
+    //private TextView windDirText;
+    //private TextView windScText;
+    private  TextView body_tmpText;
+    private TextView humText;
+    private TextView windText;
+    private TextView sunriseText;
+    private TextView sunsetText;
+    private TextView paText;
+
 
     private ImageView bingPicImg;
     private Button setting;
@@ -58,6 +67,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     private  String weatherId;
     private SharedPreferences prefs;
     private Map<String,Integer> map;
+    private String[] suggestion_string;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,14 +90,22 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         aqiText = (TextView) findViewById(R.id.aqi_text);
         pm25Text = (TextView) findViewById(R.id.pm25_text);
 
+        humText=(TextView)findViewById(R.id.hum);
+        body_tmpText=(TextView)findViewById(R.id.body_tmp);
+        windText=(TextView)findViewById(R.id.wind);
+        sunriseText=(TextView)findViewById(R.id.sunrise);
+        sunsetText=(TextView)findViewById(R.id.sunset);
+        paText=(TextView)findViewById(R.id.pa);
+
+
         bingPicImg=(ImageView)findViewById(R.id.bing_pic_img);
         swipeRefresh=(SwipeRefreshLayout)findViewById(R.id.swipe_refresh);
         swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
         drawerLayout=(DrawerLayout)findViewById(R.id.drawer_layout);
         navButton=(Button)findViewById(R.id.nav_button);
         setting=(Button)findViewById(R.id.setting);
-        windDirText=(TextView)findViewById(R.id.wind_dir_text);
-        windScText=(TextView)findViewById(R.id.wind_sc_text);
+        //windDirText=(TextView)findViewById(R.id.wind_dir_text);
+        //windScText=(TextView)findViewById(R.id.wind_sc_text);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         init();
 
@@ -288,6 +306,9 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         map.put("cw",R.drawable.icon_carwash);
         map.put("air",R.drawable.icon_air);
         map.put("uv",R.drawable.icon_uv);
+        suggestion_string=new String[]{"舒适指数---","穿衣指数---",
+                "感冒指数---","运动指数---","出行指数---","紫外线指数---",
+                "洗车指数---","天气指数---"};
     }
     /**
      * button的相应事件
@@ -364,23 +385,43 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
      * 处理并展示Weather实体类中的数据(顺序为titile，now,forecast,aqi,suggestion)
      */
     private void showWeahterInfo(CommonWeather commonweather) {
-        String cityName = commonweather.getBasic().getCity();
+        /**
+         * 获取几个类
+         */
+        CommonWeather.NowBean now=commonweather.getNow();
+        CommonWeather.BasicBean basic=commonweather.getBasic();
+        List<CommonWeather.DailyForecastBean> daily_forecast=commonweather.getDaily_forecast();
+        List<CommonWeather.LifestyleBean>lifestyle=commonweather.getLifestyle();
+        String status=commonweather.getStatus();
+        CommonWeather.UpdateBean update=commonweather.getUpdate();
+        /**
+        * 赋值title.xml
+         */
+        String cityName = basic.getCity();
         //不要年份了，原始是2016-08-08 21:58
-        String updateTime = commonweather.getUpdate().getUpdate_time().split(" ")[1];
+        String updateTime = update.getUpdate_time().split(" ")[1];
         titleCity.setText(cityName);
         titleUpdateTime.setText(updateTime);
-        String temperature = commonweather.getNow().getTmp() + "°C";
-        String info = commonweather.getNow().getCond_txt();
+        /**
+        * 赋值now.xml
+         */
+        String temperature = now.getTmp() + "°C";
+        String info = now.getCond_txt();
         degreeText.setText(temperature);
         weatherInfoText.setText(info);
-        //每一次都要删除之前的
+
+
+        /**
+         * 预报，赋值forecast.xml
+         */
+        //每一次都要删除layout之前的view
         forecastLayout.removeAllViews();
-        suggestionLayout.removeAllViews();
         //看有几个新的天气预报
         //动态加载布局，并设置相应的数据
+        //今天的不同，不写日期而写今天
         boolean todayflag=true;
 
-        for (CommonWeather.DailyForecastBean dailyForecastBean : commonweather.getDaily_forecast()) {
+        for (CommonWeather.DailyForecastBean dailyForecastBean : daily_forecast) {
             //类似于ListView,一会尝试下ListView的getView()
             String date="";
             View view = LayoutInflater.from(this).inflate(R.layout.forecasr_item,
@@ -391,7 +432,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
             //TextView info_text = (TextView) view.findViewById(R.id.info_text);
             TextView max_text = (TextView) view.findViewById(R.id.max_text);
             TextView min_text = (TextView) view.findViewById(R.id.min_text);
-            if(todayflag==true) {
+            if(todayflag) {
                 date="今天";
                 todayflag=false;
             }
@@ -408,30 +449,50 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
 
         //aqiText.setText(commonweather.aqi.city.aqi);
         //pm25Text.setText(weather.aqi.city.pm25);
+      //  windDirText.setText(commonweather.getNow().getWind_dir());
+       // windScText.setText(commonweather.getNow().getWind_sc());
 
-        windDirText.setText(commonweather.getNow().getWind_dir());
-        windScText.setText(commonweather.getNow().getWind_sc());
-        //建议
+        /**
+         * 建议，赋值suggestion.xml
+         */
+        //每一次都要删除layout之前的view
+        suggestionLayout.removeAllViews();
+        //六条建议有不同的标题比如xx指数
+        int suggestion_number=0;
         for (CommonWeather.LifestyleBean lifestyleBean:commonweather.getLifestyle())
         {
             View view = LayoutInflater.from(this).inflate(R.layout.suggestion_item,suggestionLayout,false);
             ImageView suggestion_icon=(ImageView) view.findViewById(R.id.suggestion_icon);
             TextView suggestion_main_idea=(TextView)view.findViewById(R.id.suggestion_main_idea);
             TextView suggestion_txt=(TextView)view.findViewById(R.id.suggestion_txt);
-            suggestion_main_idea.setText(lifestyleBean.getMain_idea());
+            String mainIdeaText=suggestion_string[suggestion_number++]+lifestyleBean.getMain_idea();
+            suggestion_main_idea.setText(mainIdeaText);
             suggestion_txt.setText(lifestyleBean.getTxt());
             suggestion_icon.setImageResource(map.get(lifestyleBean.getType()));
 
             //这点很重要，别忘了
             suggestionLayout.addView(view);
         }
-        /*comfortText.setText(commonweather.getLifestyle().get(0).getTxt());
-        carWashText.setText(commonweather.getLifestyle().get(4).getTxt());
-        sportText.setText(commonweather.getLifestyle().get(3).getTxt());
+       /**
+        * 赋值weather_set.xml
         */
+        String wind_String=now.getWind_dir()+commonweather.getNow().getWind_sc()
+                +"级";
+        String hum_String=now.getHum()+"%";
+        String tmp_String=now.getBody_tmp()+"°C";
+        String sunrise_String=daily_forecast.get(0).getSr();
+        String sunset_String=daily_forecast.get(0).getSs();
+        String pa_String=now.getPressure()+" hpa";
+        windText.setText(wind_String);
+        humText.setText(hum_String);
+        body_tmpText.setText(tmp_String);
+        sunsetText.setText(sunset_String);
+        sunriseText.setText(sunrise_String);
+        paText.setText(pa_String);
+
         //设置可见
         weatherLayout.setVisibility(View.VISIBLE);
-
+        //开启自动服务
         Intent intent=new Intent(this, AutoUpdateService.class);
         startService(intent);
     }

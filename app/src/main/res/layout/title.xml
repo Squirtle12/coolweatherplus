@@ -22,7 +22,7 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_gravity="center"
-        android:background="@mipmap/setting"
+        android:background="@drawable/icon_settings"
         />
     </LinearLayout>
     <TextView

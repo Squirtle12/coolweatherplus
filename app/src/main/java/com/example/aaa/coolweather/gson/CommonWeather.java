@@ -299,6 +299,24 @@ public class CommonWeather {
         private String date;
         private String tmp_max;
         private String tmp_min;
+        private String sr;
+        private String ss;
+
+        public String getSr() {
+            return sr;
+        }
+
+        public void setSr(String sr) {
+            this.sr = sr;
+        }
+
+        public String getSs() {
+            return ss;
+        }
+
+        public void setSs(String ss) {
+            this.ss = ss;
+        }
 
         public String getCond_code_d() {
             return cond_code_d;

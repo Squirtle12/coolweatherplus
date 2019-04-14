@@ -18,7 +18,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="15dp"
         android:layout_marginTop="15dp"
-        android:text="风力风向"
+        android:text="风向风力"
         android:textColor="#fff"
         android:textSize="20sp"
         />
