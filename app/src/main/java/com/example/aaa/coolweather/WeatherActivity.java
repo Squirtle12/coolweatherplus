@@ -46,14 +46,19 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     private ScrollView weatherLayout;
     private TextView titleCity;
     private TextView titleUpdateTime;
+    //now.xml
+    private TextView today_max_degree;
+    private TextView today_min_degree;
     private TextView degreeText;
-    private TextView weatherInfoText;
+    private ImageView today_weathear;
+    //private TextView weatherInfoText;
+
     private LinearLayout suggestionLayout;
     private LinearLayout forecastLayout;
     private TextView aqiText;
     private TextView pm25Text;
 
-
+    //常规天气
     private  TextView body_tmpText;
     private TextView humText;
     private TextView windText;
@@ -76,6 +81,8 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     private RecyclerView hourRecyclerView;
     private HourlyAdapter hourlyAdapter;
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,8 +98,12 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         weatherLayout = (ScrollView) findViewById(R.id.weather_layout);
         titleCity = (TextView) findViewById(R.id.title_city);
         titleUpdateTime = (TextView) findViewById(R.id.title_update_time);
+
         degreeText = (TextView) findViewById(R.id.degree_text);
-        weatherInfoText = (TextView) findViewById(R.id.weather_info_text);
+        today_max_degree=(TextView)findViewById(R.id.today_max_degree);
+        today_min_degree=(TextView)findViewById(R.id.today_min_degree);
+        today_weathear=(ImageView)findViewById(R.id.today_weather);
+
         suggestionLayout=(LinearLayout)findViewById(R.id.suggestion_layout);
         forecastLayout = (LinearLayout) findViewById(R.id.forecast_layout);
         aqiText = (TextView) findViewById(R.id.aqi_text);
@@ -447,6 +458,8 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
             hourList.add(newhour);
         }
         hourlyAdapter.notifyDataSetChanged();
+        //滚动到最初，每次都从第一个子项显示
+        hourRecyclerView.scrollToPosition(0);
         /**
         * 赋值title.xml
          */
@@ -461,9 +474,12 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         String temperature = now.getTmp() + "°C";
         String info = now.getCond_txt();
         degreeText.setText(temperature);
-        weatherInfoText.setText(info);
-
-
+       // weatherInfoText.setText(info);
+        String today_max_degree_info=daily_forecast.get(0).getTmp_max()+"°C";
+        String today_min_degree_info=daily_forecast.get(0).getTmp_min()+"°C";
+        today_max_degree.setText(today_max_degree_info);
+        today_min_degree.setText(today_min_degree_info);
+        today_weathear.setImageResource(map.get(daily_forecast.get(0).getCond_txt_d()));
         /**
          * 预报，赋值forecast.xml
          */
@@ -486,8 +502,10 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
             TextView max_text = (TextView) view.findViewById(R.id.max_text);
             TextView min_text = (TextView) view.findViewById(R.id.min_text);
             if(todayflag) {
-                date="今天";
+                //date="今天";
                 todayflag=false;
+                //跳过今天，去执行下一天。
+                continue;
             }
             else
                 date=dailyForecastBean.getDate();
