@@ -24,6 +24,16 @@ public class CommonWeather {
     private NowBean now;
     private List<DailyForecastBean> daily_forecast;
     private List<LifestyleBean> lifestyle;
+    //隔小时
+    private List<Hourly>hourlyList;
+
+    public List<Hourly> getHourlyList() {
+        return hourlyList;
+    }
+
+    public void setHourlyList(List<Hourly> hourlyList) {
+        this.hourlyList = hourlyList;
+    }
 
     public BasicBean getBasic() {
         return basic;

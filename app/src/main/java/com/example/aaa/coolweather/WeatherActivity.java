@@ -13,6 +13,8 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -25,11 +27,13 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.aaa.coolweather.db.Province;
 import com.example.aaa.coolweather.gson.CommonWeather;
+import com.example.aaa.coolweather.gson.Hourly;
 import com.example.aaa.coolweather.service.AutoUpdateService;
 import com.example.aaa.coolweather.util.HttpUtil;
 import com.example.aaa.coolweather.util.Utility;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,8 +53,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     private TextView aqiText;
     private TextView pm25Text;
 
-    //private TextView windDirText;
-    //private TextView windScText;
+
     private  TextView body_tmpText;
     private TextView humText;
     private TextView windText;
@@ -68,6 +71,11 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     private SharedPreferences prefs;
     private Map<String,Integer> map;
     private String[] suggestion_string;
+
+    private List<Hour>hourList=new ArrayList<>();
+    private RecyclerView hourRecyclerView;
+    private HourlyAdapter hourlyAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,9 +112,19 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         drawerLayout=(DrawerLayout)findViewById(R.id.drawer_layout);
         navButton=(Button)findViewById(R.id.nav_button);
         setting=(Button)findViewById(R.id.setting);
-        //windDirText=(TextView)findViewById(R.id.wind_dir_text);
-        //windScText=(TextView)findViewById(R.id.wind_sc_text);
+
+
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        hourRecyclerView =(RecyclerView)findViewById(R.id.recycler_view);
+        LinearLayoutManager layoutManager=new LinearLayoutManager(this);
+        //设置横向
+        layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        hourRecyclerView.setLayoutManager(layoutManager);
+        hourlyAdapter =new HourlyAdapter(hourList);
+        hourRecyclerView.setAdapter(hourlyAdapter);
+
+
         init();
 
         String weatherString = prefs.getString("weather", null);
@@ -394,6 +412,41 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         List<CommonWeather.LifestyleBean>lifestyle=commonweather.getLifestyle();
         String status=commonweather.getStatus();
         CommonWeather.UpdateBean update=commonweather.getUpdate();
+        List<Hourly> hourlyList=commonweather.getHourlyList();
+        /**
+         * 赋值hourly.xml
+         * hourlyList是从服务器上获取的list，
+         * 我们要将其中数据赋值给HourlyAdapter的数据源hourlist。
+         */
+        hourList.clear();
+        for(Hourly hourly:hourlyList)
+        {
+            Hour newhour=new Hour();
+            //获取到小时。（比如22）
+            int hourtime=Integer.valueOf(hourly.getTime().split(" ")[1].split(":")[0]);
+            //0代表早上（1：00-7：00），1代表上午（8：00-12：00），
+            // 2代表下午（13：00-17：00），3代表晚上（18：00-24：00）。
+            String time;
+
+            if (hourtime>=18)
+                time="晚上";
+            else if(hourtime>=13)
+                time="下午";
+            else if (hourtime>=8)
+                time="上午";
+            else
+                time="早上";
+            //超过12就减去12
+            hourtime=hourtime>12?hourtime-12:hourtime;
+            String hourString=time+hourtime+":00";
+            String hourtmp=hourly.getTmp();
+            int hour_icon_id=map.get(hourly.getCond_txt());
+            newhour.setHourly_icon_id(hour_icon_id);
+            newhour.setHourly_time(hourString);
+            newhour.setHourly_tmp(hourtmp);
+            hourList.add(newhour);
+        }
+        hourlyAdapter.notifyDataSetChanged();
         /**
         * 赋值title.xml
          */

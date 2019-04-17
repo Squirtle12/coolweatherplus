@@ -28,8 +28,10 @@ public class CommonWeatherDeserializer implements JsonDeserializer<CommonWeather
         CommonWeather.NowBean now=context.deserialize(jsonObject1.get("now"), CommonWeather.NowBean.class);
         final JsonArray daily_forecast_array=jsonObject1.get("daily_forecast").getAsJsonArray();
         final JsonArray lifestyle_array=jsonObject1.get("lifestyle").getAsJsonArray();
+        final JsonArray hourly=jsonObject1.get("hourly").getAsJsonArray();
         List<CommonWeather.DailyForecastBean> dailyForecastBeanslist=new ArrayList<>();
         List<CommonWeather.LifestyleBean>lifestyleBeanslist=new ArrayList<>();
+        List<Hourly>hourlyList=new ArrayList<>();
         for (JsonElement jsonElement1:daily_forecast_array)
         {
             CommonWeather.DailyForecastBean dailyForecastBean=context.deserialize(jsonElement1, CommonWeather.DailyForecastBean.class);
@@ -40,6 +42,11 @@ public class CommonWeatherDeserializer implements JsonDeserializer<CommonWeather
             CommonWeather.LifestyleBean lifestyleBean=context.deserialize(jsonElement1, CommonWeather.LifestyleBean.class);
             lifestyleBeanslist.add(lifestyleBean);
         }
+        for(JsonElement jsonElement1:hourly)
+        {
+            Hourly hourly1=context.deserialize(jsonElement1,Hourly.class);
+            hourlyList.add(hourly1);
+        }
         CommonWeather commonWeather=new CommonWeather();
         commonWeather.setStatus(status);
         commonWeather.setBasic(basic);
@@ -47,6 +54,7 @@ public class CommonWeatherDeserializer implements JsonDeserializer<CommonWeather
         commonWeather.setNow(now);
         commonWeather.setDaily_forecast(dailyForecastBeanslist);
         commonWeather.setLifestyle(lifestyleBeanslist);
+        commonWeather.setHourlyList(hourlyList);
         return commonWeather;
     }
 }
