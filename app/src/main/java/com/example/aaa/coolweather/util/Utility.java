@@ -5,6 +5,8 @@ import android.text.TextUtils;
 import com.example.aaa.coolweather.db.City;
 import com.example.aaa.coolweather.db.County;
 import com.example.aaa.coolweather.db.Province;
+import com.example.aaa.coolweather.gson.AirNow;
+import com.example.aaa.coolweather.gson.AirNowDeserializer;
 import com.example.aaa.coolweather.gson.CommonWeather;
 import com.example.aaa.coolweather.gson.CommonWeatherDeserializer;
 import com.google.gson.Gson;
@@ -80,7 +82,7 @@ public class Utility {
     /**
      * 解析和处理服务器返回的县级数据
      */
-    public static boolean handleCountyResponse(String response,int cityid){
+    public static boolean handleCountyResponse(String response,int cityid,String cityName){
         if(!TextUtils.isEmpty(response)){
             try {
                 JSONArray allcounties=new JSONArray(response);
@@ -91,6 +93,7 @@ public class Utility {
                     county.setConutyName(object.getString("name"));
                     county.setWeatherId(object.getString("weather_id"));
                     county.setCityId(cityid);
+                    county.setCityName(cityName);
                     county.save();
                 }
                 return true;
@@ -122,5 +125,16 @@ public class Utility {
         Gson gson=gsonBuilder.create();
         CommonWeather commonWeather=gson.fromJson(response,CommonWeather.class);
         return commonWeather;
+    }
+    /**
+     * 解析空气数据
+     *
+     */
+    public  static AirNow handleAirNowResponse(String response){
+        GsonBuilder gsonBuilder=new GsonBuilder();
+        gsonBuilder.registerTypeAdapter(AirNow.class,new AirNowDeserializer());
+        Gson gson=gsonBuilder.create();
+        AirNow airNow=gson.fromJson(response,AirNow.class);
+        return airNow;
     }
 }

@@ -15,6 +15,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -26,6 +27,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.aaa.coolweather.db.Province;
+import com.example.aaa.coolweather.gson.AirNow;
 import com.example.aaa.coolweather.gson.CommonWeather;
 import com.example.aaa.coolweather.gson.Hourly;
 import com.example.aaa.coolweather.service.AutoUpdateService;
@@ -73,6 +75,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     public DrawerLayout drawerLayout;
     private Button navButton;
     private  String weatherId;
+    private String airId;
     private SharedPreferences prefs;
     private Map<String,Integer> map;
     private String[] suggestion_string;
@@ -81,8 +84,12 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     private RecyclerView hourRecyclerView;
     private HourlyAdapter hourlyAdapter;
 
+    private boolean weatherflag=false;
+    private boolean airflag=false;
 
-
+    //private int orderNum=1;
+    private CircleIndexView circleIndexView;
+    private LinearLayout aqiGasLayout;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -106,8 +113,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
 
         suggestionLayout=(LinearLayout)findViewById(R.id.suggestion_layout);
         forecastLayout = (LinearLayout) findViewById(R.id.forecast_layout);
-        aqiText = (TextView) findViewById(R.id.aqi_text);
-        pm25Text = (TextView) findViewById(R.id.pm25_text);
+
 
         humText=(TextView)findViewById(R.id.hum);
         body_tmpText=(TextView)findViewById(R.id.body_tmp);
@@ -135,9 +141,12 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         hourlyAdapter =new HourlyAdapter(hourList);
         hourRecyclerView.setAdapter(hourlyAdapter);
 
+        circleIndexView=(CircleIndexView)findViewById(R.id.circleindexview);
+        aqiGasLayout=(LinearLayout)findViewById(R.id.aqi_gas_layout);
 
         init();
 
+        //判断CommonWeather
         String weatherString = prefs.getString("weather", null);
 
         //判断缓存中是否右
@@ -159,13 +168,42 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
             //去服务器查询
             requestWeather(weatherId);
         }
+
+
+        String airnowString=prefs.getString("airnow",null);
+        if (airnowString != null) {
+            //有缓存时直接解析空气数据
+            //不需要再去上网获取了json形式数据。
+            AirNow airNow = Utility.handleAirNowResponse(airnowString);
+            weatherId=airNow.getCid();
+            showAirInfo(airNow);
+
+        } else {
+            //无缓存时去服务器查询天气
+            //这个weather_id是在之前的碎片转到这个活动的时候，一起通过intent传过来的。
+            //weatherId = getIntent().getStringExtra("weather_id");
+            //不显示
+            weatherLayout.setVisibility(View.INVISIBLE);
+
+            //去服务器查询
+            requestAir(weatherId);
+
+        }
+
+        //两个都找完了才刷新结束
+
+
+
+
         //下拉刷新控件的对应事件。
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.
                 OnRefreshListener() {
             @Override
             public void onRefresh() {
-                weatherId=prefs.getString("weather_id",null);
                 requestWeather(weatherId);
+               requestAir(weatherId);
+
+
             }
         });
         String bingPic=prefs.getString("bing_pic",null);
@@ -355,14 +393,75 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         }
     }
     /**
+     * 根据天气id请求空气质量信息
+     */
+    public  void requestAir(final String airweatherId){
+        SharedPreferences.Editor editor = PreferenceManager.
+                getDefaultSharedPreferences(WeatherActivity.this).edit();
+        //必须传这个,存储至sp,下次就可以直接解析。
+
+        String airUrl="https://free-api.heweather.net/s6/air/now?location="+airweatherId+"&key=a15bff1949104f8ba6d4553c611ac2f7";
+        //this.weatherId=weatherId;
+        airflag=false;
+        HttpUtil.sendOkHttpRequest(airUrl, new Callback() {
+            @Override
+            public  void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(WeatherActivity.this, "获取空气信息不成功",
+                                Toast.LENGTH_SHORT).show();
+                        //刷新事件结束，隐藏刷新进度条
+                        swipeRefresh.setRefreshing(false);
+                    }
+                });
+            }
+
+            @Override
+            public   void onResponse(Call call, Response airresponse) throws IOException {
+                final String responseText = airresponse.body().string();
+                //获取weather类
+                final AirNow airnow = Utility.handleAirNowResponse(responseText);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //状态码
+                        if (airnow != null&&"ok".equals(airnow.getStatus()) ) {
+                            //
+                            SharedPreferences.Editor editor = PreferenceManager.
+                                    getDefaultSharedPreferences(WeatherActivity.this).edit();
+                            //必须传这个,存储至sp,下次就可以直接解析。
+                            editor.putString("airnow", responseText);
+                            editor.apply();
+                            //展示天气
+                            showAirInfo(airnow);
+                        } else {
+                            Toast.makeText(WeatherActivity.this, "获取空气信息失败",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+
+                        airflag=true;
+
+                        if (weatherflag&&airflag)
+                            swipeRefresh.setRefreshing(false);
+
+                    }
+                });
+            }
+        });
+    }
+    /**
      * 根据天气id请求城市天气信息
      */
-    public void requestWeather(final String weatherId) {
+    public  void requestWeather(final String weatherId) {
 
+
+        weatherflag=false;
         String weatherUrl = "https://free-api.heweather.net/s6/weather?location=" + weatherId +
                 "&key=a15bff1949104f8ba6d4553c611ac2f7";
         //请求一次更改一次（应对换城市后，在刷新就会刷新到上一个城市的bug）
-        //this.weatherId=weatherId;
+        this.weatherId=weatherId;
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -379,7 +478,8 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
+            public  void onResponse(Call call, Response response) throws IOException {
+
                 final String responseText = response.body().string();
                 //获取weather类
                 final CommonWeather commonweather = Utility.handleCommonWeatherResponse(responseText);
@@ -401,7 +501,11 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
                                     Toast.LENGTH_SHORT).show();
                         }
                         //刷新事件结束，隐藏刷新进度条
+
+                        weatherflag=true;
+                        if (weatherflag&&airflag)
                         swipeRefresh.setRefreshing(false);
+
                     }
                 });
             }
@@ -409,11 +513,35 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         //加载必应
         loadBingPic();
     }
+    /**
+     *处理并展示AirNow类的数据
+     */
+    private void showAirInfo(AirNow airNow){
+//        circleIndexView.updateIndex(50,"良");
+        circleIndexView.updateIndex(Integer.valueOf(airNow.getAqi()),airNow.getQuality());
+        //加载气体
+        aqiGasLayout.removeAllViews();
+        String []airName=new String[]{"Pm2.5","Pm10","Co","So2","No3","O3"};
+        String[]airResult=new String[]{airNow.getPm25(),airNow.getPm10(),airNow.getCo(),
+                airNow.getSo2(),airNow.getNo2(),airNow.getO3()};
+        for(int i=0;i<6;i++)
+        {
+            View view = LayoutInflater.from(this).inflate(R.layout.airnow_item,
+                    forecastLayout, false);
+            TextView airname=(TextView)view.findViewById(R.id.airname);
+            TextView airresult=(TextView)view.findViewById(R.id.airresult);
+            airname.setText(airName[i]);
+            airresult.setText(airResult[i]);
+            aqiGasLayout.addView(view);
+        }
+
+        //weatherLayout.setVisibility(View.VISIBLE);
+    }
 
     /**
-     * 处理并展示Weather实体类中的数据(顺序为titile，now,forecast,aqi,suggestion)
+     * 处理并展示CommonWeather实体类中的数据
      */
-    private void showWeahterInfo(CommonWeather commonweather) {
+    private  void showWeahterInfo(CommonWeather commonweather) {
         /**
          * 获取几个类
          */

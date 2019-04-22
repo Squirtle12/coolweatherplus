@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CircleIndexView">
+        <attr name="middleText" format="string"/>
+        <attr name="middleTextSize" format="dimension"/>
+        <attr name="middleTextColor" format="color"/>
+        <attr name="topText" format="string"/>
+        <attr name="topTextSize" format="dimension"/>
+        <attr name="topTextColor" format="color"/>
+        <attr name="numberTextSize" format="dimension"/>
+        <attr name="numberColor" format="color"/>
+        <attr name="outCircleColor" format="color"/>
+        <attr name="inCircleColor" format="color"/>
+        <attr name="duration" format="integer"/>
+    </declare-styleable>
+</resources>

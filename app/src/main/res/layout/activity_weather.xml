@@ -47,6 +47,7 @@
             </include>
             <include layout="@layout/weather_set">
             </include>
+            <include layout="@layout/airnow"/>
             <include layout="@layout/suggestion">
             </include>
         </LinearLayout>

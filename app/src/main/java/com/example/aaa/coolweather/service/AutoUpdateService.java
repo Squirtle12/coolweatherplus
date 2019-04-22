@@ -10,6 +10,7 @@ import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.example.aaa.coolweather.gson.AirNow;
 import com.example.aaa.coolweather.gson.CommonWeather;
 
 import com.example.aaa.coolweather.util.HttpUtil;
@@ -69,13 +70,18 @@ public class AutoUpdateService extends Service {
         SharedPreferences prefs= PreferenceManager.getDefaultSharedPreferences(this);
         //其实只是想要它的id，来去获取服务器中的数据
         String weatherString=prefs.getString("weather",null);
+        String airString=prefs.getString("airnow",null);
         if (weatherString!=null)
         {
             //有缓存直接解析
             CommonWeather commonweather= Utility.handleCommonWeatherResponse(weatherString);
+            AirNow airNow=Utility.handleAirNowResponse(airString);
             final String weatherId=commonweather.getBasic().getCid();
+            final String airId=airNow.getCid();
             String weatherUrl = "https://free-api.heweather.net/s6/weather?location=" + weatherId +
                     "&key=a15bff1949104f8ba6d4553c611ac2f7";
+            String airUrl="https://free-api.heweather.net/s6/air/now?location=" +airId
+                    +"&key=a15bff1949104f8ba6d4553c611ac2f7";
             HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
@@ -97,6 +103,28 @@ public class AutoUpdateService extends Service {
                         }
                 }
             });
+            HttpUtil.sendOkHttpRequest(airUrl, new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    e.printStackTrace();
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String responseText=response.body().string();
+                    AirNow airNow=Utility.handleAirNowResponse(responseText);
+                    if (airNow!=null){
+                        //更新SharedPrefrences即可，不需要取更改，
+                        // 因为在打开WeatherActivty中每次都会先调用缓存
+                        SharedPreferences.Editor editor=PreferenceManager.
+                                getDefaultSharedPreferences(AutoUpdateService.this)
+                                .edit();
+                        editor.putString("airnow",responseText);
+                        editor.apply();
+                    }
+                }
+            });
+
         }
     }
     /**

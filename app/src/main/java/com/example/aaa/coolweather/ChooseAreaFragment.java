@@ -112,6 +112,8 @@ public class ChooseAreaFragment extends Fragment {
                 else if(currentLevel==LEVEL_COUNTY){
                     //选中了县级城市
                     String weatherid=countyList.get(position).getWeatherId();
+                    String cityname=countyList.get(position).getCityName();
+                    //int cityid=countyList.get(position).getCityId();
                     //判断碎片在哪个活动。如果是初始函数时，则跳转到天气Acitivity,
                     //intent跳转时要携带weatherid，也就是县级城市的id
                     if (getActivity()instanceof MainActivity) {
@@ -126,18 +128,11 @@ public class ChooseAreaFragment extends Fragment {
                     //关闭滑动菜单，可以下拉刷新，请求新天气的信息。
                     else if (getActivity()instanceof WeatherActivity){
                         WeatherActivity activity=(WeatherActivity)getActivity();
-
-
-                        SharedPreferences.Editor editor=PreferenceManager.
-                                //不能使用getDefaultSharedPreferences(WeatherActivity.this)
-                                getDefaultSharedPreferences(getContext())
-                                .edit();
-
-                        editor.putString("weather_id",weatherid);
-                        editor.apply();
                         activity.drawerLayout.closeDrawers();
                         activity.swipeRefresh.setRefreshing(true);
                         activity.requestWeather(weatherid);
+                        //最高只能到城市，所以即使到县级我们也直接传入城市的
+                        activity.requestAir(cityname);
 
                     }
                 }
@@ -280,7 +275,7 @@ public class ChooseAreaFragment extends Fragment {
                     result=Utility.handleCityResponse(responseText,selectedProvince.getId());
                 }
                 else if("county".equals(type)){
-                    result=Utility.handleCountyResponse(responseText,selectedCity.getId());
+                    result=Utility.handleCountyResponse(responseText,selectedCity.getId(),selectedCity.getCityName());
                 }
                 //解析完数据牵涉到UI操作，因此必须要在主线程中调用。
                 //数据库中有了，可以显示了。
