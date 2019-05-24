@@ -19,6 +19,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.aaa.coolweather.MainActivity;
+import com.example.aaa.coolweather.R;
+import com.example.aaa.coolweather.WeatherActivity;
 import com.example.aaa.coolweather.db.City;
 import com.example.aaa.coolweather.db.County;
 import com.example.aaa.coolweather.db.Province;
@@ -45,7 +48,7 @@ public class ChooseAreaFragment extends Fragment {
     public static final int LEVEL_CITY=1;
     public static final int LEVEL_COUNTY =2;
 
-    private ProgressBar progressBar;
+
     private ProgressDialog progressDialog;
     private TextView titleText;
     private Button backButton;
@@ -131,7 +134,8 @@ public class ChooseAreaFragment extends Fragment {
                         activity.drawerLayout.closeDrawers();
                         activity.swipeRefresh.setRefreshing(true);
                         activity.requestWeather(weatherid);
-                        //最高只能到城市，所以即使到县级我们也直接传入城市的
+                        //空气质量得权限最高只能到城市，
+                        // 所以即使到县级我们也直接传入城市的id。
                         activity.requestAir(cityname);
 
                     }
@@ -321,25 +325,5 @@ public class ChooseAreaFragment extends Fragment {
             progressDialog.dismiss();
         }
     }
-    /**
-     * 使用progressBar
-     */
-    private void  showProgressBar()
-    {
-        if(progressBar==null)
-        {
-            progressBar=new ProgressBar(getActivity());
-        }
-        progressBar.setVisibility(View.VISIBLE);
-    }
-    /**
-     * 关闭progressBar
-     */
-    private void  closeProgressBar()
-    {
-        if (progressBar!=null)
-        {
-            progressBar.setVisibility(View.GONE);
-        }
-    }
+
 }

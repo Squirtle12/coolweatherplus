@@ -1,5 +1,8 @@
 package com.example.aaa.coolweather.util;
 
+import android.app.Notification;
+import android.content.Context;
+import android.support.v7.app.NotificationCompat;
 import android.text.TextUtils;
 
 import com.example.aaa.coolweather.db.City;
@@ -136,5 +139,17 @@ public class Utility {
         Gson gson=gsonBuilder.create();
         AirNow airNow=gson.fromJson(response,AirNow.class);
         return airNow;
+    }
+
+    /**
+     * dp转换成px。
+     * @param context
+     * @param dpValue
+     * @return
+     */
+    public static int dp2px(Context context, float dpValue)
+    {
+        float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
     }
 }

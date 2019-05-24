@@ -1,21 +1,17 @@
 package com.example.aaa.coolweather;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.v4.view.GravityCompat;
-import android.support.v4.view.ScrollingView;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -26,11 +22,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.example.aaa.coolweather.db.Province;
+import com.example.aaa.coolweather.View.CircleIndexView;
+import com.example.aaa.coolweather.View.SunView;
 import com.example.aaa.coolweather.gson.AirNow;
 import com.example.aaa.coolweather.gson.CommonWeather;
 import com.example.aaa.coolweather.gson.Hourly;
 import com.example.aaa.coolweather.service.AutoUpdateService;
+import com.example.aaa.coolweather.service.NotificationService;
 import com.example.aaa.coolweather.util.HttpUtil;
 import com.example.aaa.coolweather.util.Utility;
 
@@ -75,7 +73,9 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     public DrawerLayout drawerLayout;
     private Button navButton;
     private  String weatherId;
+
     private String airId;
+
     private SharedPreferences prefs;
     private Map<String,Integer> map;
     private String[] suggestion_string;
@@ -90,6 +90,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     //private int orderNum=1;
     private CircleIndexView circleIndexView;
     private LinearLayout aqiGasLayout;
+    private SunView sunView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -143,6 +144,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
 
         circleIndexView=(CircleIndexView)findViewById(R.id.circleindexview);
         aqiGasLayout=(LinearLayout)findViewById(R.id.aqi_gas_layout);
+        sunView=(SunView)findViewById(R.id.sunview);
 
         init();
 
@@ -175,7 +177,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
             //有缓存时直接解析空气数据
             //不需要再去上网获取了json形式数据。
             AirNow airNow = Utility.handleAirNowResponse(airnowString);
-            weatherId=airNow.getCid();
+            airId=airNow.getCid();
             showAirInfo(airNow);
 
         } else {
@@ -184,9 +186,9 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
             //weatherId = getIntent().getStringExtra("weather_id");
             //不显示
             weatherLayout.setVisibility(View.INVISIBLE);
-
+            airId=getIntent().getStringExtra("airnow_city");
             //去服务器查询
-            requestAir(weatherId);
+            requestAir(airId);
 
         }
 
@@ -201,7 +203,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
             @Override
             public void onRefresh() {
                 requestWeather(weatherId);
-               requestAir(weatherId);
+               requestAir(airId);
 
 
             }
@@ -398,8 +400,8 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
     public  void requestAir(final String airweatherId){
         SharedPreferences.Editor editor = PreferenceManager.
                 getDefaultSharedPreferences(WeatherActivity.this).edit();
-        //必须传这个,存储至sp,下次就可以直接解析。
 
+        airId=airweatherId;
         String airUrl="https://free-api.heweather.net/s6/air/now?location="+airweatherId+"&key=a15bff1949104f8ba6d4553c611ac2f7";
         //this.weatherId=weatherId;
         airflag=false;
@@ -410,7 +412,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(WeatherActivity.this, "获取空气信息不成功",
+                        Toast.makeText(WeatherActivity.this, "获取空气信息不成功,使用城市的空气质量",
                                 Toast.LENGTH_SHORT).show();
                         //刷新事件结束，隐藏刷新进度条
                         swipeRefresh.setRefreshing(false);
@@ -437,7 +439,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
                             //展示天气
                             showAirInfo(airnow);
                         } else {
-                            Toast.makeText(WeatherActivity.this, "获取空气信息失败",
+                            Toast.makeText(WeatherActivity.this, "获取空气信息失败，使用城市的空气质量",
                                     Toast.LENGTH_SHORT).show();
                         }
 
@@ -688,12 +690,18 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
         sunsetText.setText(sunset_String);
         sunriseText.setText(sunrise_String);
         paText.setText(pa_String);
-
+        /**
+         * 设置Sunview
+         */
+        sunView.setTimes(sunrise_String,sunset_String,updateTime);
         //设置可见
         weatherLayout.setVisibility(View.VISIBLE);
         //开启自动服务
         Intent intent=new Intent(this, AutoUpdateService.class);
         startService(intent);
+        //开启通知服务
+        Intent intent1=new Intent(this, NotificationService.class);
+        startService(intent1);
     }
     /**
      * 加载必应每日一图

@@ -30,10 +30,10 @@
     android:layout_weight="1"
 
         >
-   <com.example.aaa.coolweather.CircleIndexView
+   <com.example.aaa.coolweather.View.CircleIndexView
        android:id="@+id/circleindexview"
-       android:layout_width="200dp"
-       android:layout_height="200dp"
+       android:layout_width="170dp"
+       android:layout_height="170dp"
        app:topText="污染指数"
        />
     </RelativeLayout>

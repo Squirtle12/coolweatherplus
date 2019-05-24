@@ -1,4 +1,4 @@
-package com.example.aaa.coolweather;
+package com.example.aaa.coolweather.View;
 
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
@@ -377,22 +377,36 @@ public class CircleIndexView extends View {
         //让这个与圆的最顶端间隔20px
         canvas.drawText(getTopText(), getCircleWidth() / 2,baseline ,middleTextPaint);
 }
+
+    /**
+     *
+     * @param value 空气质量数值
+     * @param middleText 空气质量（良）
+     */
     public void updateIndex(int value,String middleText){
 
         setMiddleText(middleText);
         invalidate();
+        //当前角度
         float inSweepAngle = sweepAngle * value / 500;
+        //角度由0f到当前角度变化
         ValueAnimator angleAnim = ValueAnimator.ofFloat(0f, inSweepAngle);
+        //动画持续时间
         angleAnim.setDuration(getDuration());
+        //数值由0到value变化
         ValueAnimator valueAnim = ValueAnimator.ofInt(0,value);
         valueAnim.setDuration(getDuration());
+        //注册监听器
         angleAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener()
         {
             @Override
+            //当angleAnim变化回调/
             public void onAnimationUpdate(ValueAnimator valueAnimator)
             {
                 float currentValue = (float) valueAnimator.getAnimatedValue();
+                //将当前的角度值赋给inSweepAngle
                 setInSweepAngle(currentValue);
+                //通知view改变，调用这个函数后，会返回到onDraw();
                 invalidate();
             }
         });
@@ -406,7 +420,7 @@ public class CircleIndexView extends View {
                 invalidate();
             }
         });
-
+        //让两个动画同时进行。
         AnimatorSet animatorSet = new AnimatorSet();
         animatorSet.setInterpolator(new DecelerateInterpolator());
         animatorSet.setStartDelay(150);
