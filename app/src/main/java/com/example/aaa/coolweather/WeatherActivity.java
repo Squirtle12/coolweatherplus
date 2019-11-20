@@ -12,6 +12,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -177,6 +178,7 @@ public class WeatherActivity extends AppCompatActivity implements View.OnClickLi
             //有缓存时直接解析空气数据
             //不需要再去上网获取了json形式数据。
             AirNow airNow = Utility.handleAirNowResponse(airnowString);
+            Log.d("1111",airNow.toString());
             airId=airNow.getCid();
             showAirInfo(airNow);
 

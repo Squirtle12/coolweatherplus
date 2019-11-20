@@ -123,8 +123,10 @@ public class ChooseAreaFragment extends Fragment {
                         Intent intent = new Intent(getActivity(), WeatherActivity.class);
                         //跳转的过程将数据存入intent
                         intent.putExtra("weather_id", weatherid);
+                        intent.putExtra("airnow_id", weatherid);
                         startActivity(intent);
                         //查一下意思
+                        //销毁活动
                         getActivity().finish();
                     }
                     //如果是在显示县级城市的天气界面(weather Activtity)，则不需要再跳转了，

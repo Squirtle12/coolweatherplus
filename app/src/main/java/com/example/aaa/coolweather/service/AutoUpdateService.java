@@ -71,7 +71,7 @@ public class AutoUpdateService extends Service {
         //其实只是想要它的id，来去获取服务器中的数据
         String weatherString=prefs.getString("weather",null);
         String airString=prefs.getString("airnow",null);
-        if (weatherString!=null)
+        if (weatherString!=null&&airString!=null)
         {
             //有缓存直接解析
             CommonWeather commonweather= Utility.handleCommonWeatherResponse(weatherString);
